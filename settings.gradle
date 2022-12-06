@@ -1,3 +1,3 @@
-rootProject.name = 'demoIceGridProject'
+rootProject.name = 'Distributed-SudokuSolver'
 include 'client'
 include 'server'
