@@ -1,59 +1,51 @@
-def demoIceGridProject(name) {
-    project(name) {
-        slice {
-            java {
-                include = ["${projectDir}"]
-                srcDir = '.'
-            }
-        }
+//
+// Install the gradle Ice Builder plug-in from the plug-in portal
+//
+plugins {
+    id 'com.zeroc.gradle.ice-builder.slice' version '1.4.7' apply false
+}
 
-        sourceSets {
-            main {
-                java {
-                    srcDir '.'
-                }
-            }
-        }
+subprojects {
+    //
+    // Apply Java and Ice Builder plug-ins to all sub-projects
+    //
+    apply plugin: 'java'
+    apply plugin: 'com.zeroc.gradle.ice-builder.slice'
 
-        dependencies {
-            implementation localDependency("ice")
-            runtimeOnly localDependency("icessl")
-            implementation localDependency("icegrid")
-            runtimeOnly localDependency("icelocatordiscovery")
-            runtimeOnly "org.apache.commons:commons-compress:1.14"
+    //
+    // Both Client and Server projects share the Printer.ice Slice definitions
+    //
+    slice {
+        java {
+            files = [file("../SudokuSolver.ice")]
         }
-
-        task makeDbDirs {
-            doLast {
-                file('db/registry').mkdirs()
-                file('db/node').mkdirs()
-            }
-        }
-        compileJava.dependsOn(makeDbDirs)
-
-        clean {
-            delete 'db'
-        }
-
-        // Don't create the default jar.
-        jar.enabled = false
     }
-}
 
-demoIceGridProject(":demoIceGridSimple")
-demoIceGridProject(":demoIceGridIcebox")
+    //
+    // Use Ice JAR files from maven central repository
+    //
+    repositories {
+        mavenCentral()
+    }
 
-project(":demoIceGridSimple") {
-    demoJar("client")
-    demoJar("server")
-}
-
-project(":demoIceGridIcebox") {
+    //
+    // Both Client and Server depend only on Ice JAR
+    //
     dependencies {
-        runtimeOnly localDependency("icessl")
-        implementation localDependency("icebox")
+
+        implementation 'com.zeroc:ice:3.7.6'
+        implementation 'com.zeroc:icegrid:3.7.6'
+
+
     }
-    demoJar("client")
-    demoJar("service")
-    demoIceBoxServer()
+
+
+    jar {
+        manifest {
+            attributes(
+                    "Main-Class": project.name.capitalize(),
+                    "Class-Path": configurations.runtimeClasspath.resolve().collect { it.toURI() }.join(' ')
+            )
+        }
+    }
 }
